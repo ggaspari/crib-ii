@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRIB-II · Calculadora de Risco Clínico Neonatal</title>
+<script>
+(function(){
+  try{
+    var stored = localStorage.getItem('crib2-theme');
+    if(stored === 'light' || stored === 'dark'){
+      document.documentElement.setAttribute('data-theme', stored);
+    }
+  }catch(e){}
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E15;
+    --panel:#10151F;
+    --panel-2:#141B28;
+    --border:#20293A;
+    --border-soft:#1A2130;
+    --text:#EAF0F6;
+    --text-dim:#8493AA;
+    --text-faint:#4E5C72;
+    --cyan:#4FD8C6;
+    --cyan-dim:#2B4A47;
+    --amber:#E9A94A;
+    --amber-dim:#4A3A20;
+    --red:#E9635C;
+    --red-dim:#4A2B2B;
+    --mono:'JetBrains Mono', monospace;
+    --sans:'IBM Plex Sans', sans-serif;
+  }
+  :root[data-theme="light"]{
+    --bg:#F4F6FA;
+    --panel:#FFFFFF;
+    --panel-2:#EEF1F6;
+    --border:#D7DCE6;
+    --border-soft:#E4E8EF;
+    --text:#10151F;
+    --text-dim:#47536A;
+    --text-faint:#7C879C;
+    --cyan:#0E8074;
+    --cyan-dim:#D7F1EC;
+    --amber:#9A6400;
+    --amber-dim:#FBEBD2;
+    --red:#C23B33;
+    --red-dim:#FBE1DE;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:var(--bg); color:var(--text); font-family:var(--sans); -webkit-font-smoothing:antialiased;}
+  body{padding:28px 20px 80px; min-height:100vh; overflow-x:hidden;}
+  .wrap{max-width:1180px; margin:0 auto;}
+
+  /* ---------- header ---------- */
+  header{display:flex; flex-direction:column; gap:6px; margin-bottom:28px; border-bottom:1px solid var(--border-soft); padding-bottom:20px;}
+  .header-top{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--cyan);}
+  h1{font-size:26px; font-weight:600; letter-spacing:-0.01em;}
+  .sub{color:var(--text-dim); font-size:13.5px; max-width:640px; line-height:1.5;}
+  .crosslink{font-size:12px; color:var(--text-faint); margin-top:2px;}
+  .crosslink a{color:var(--cyan); text-decoration:none;}
+  .crosslink a:hover{text-decoration:underline;}
+
+  .theme-toggle{
+    display:flex; align-items:center; gap:6px; background:var(--panel-2); border:1px solid var(--border);
+    color:var(--text-dim); font-family:var(--sans); font-size:12px; font-weight:600;
+    padding:7px 12px; border-radius:7px; cursor:pointer; transition:all .15s; white-space:nowrap;
+  }
+  .theme-toggle:hover{border-color:var(--text-faint); color:var(--text);}
+
+  /* ---------- layout ---------- */
+  .grid{display:flex; flex-direction:column; gap:0;}
+
+  .section-label{
+    display:flex; align-items:center; gap:10px;
+    font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--text-faint); margin:26px 0 12px;
+  }
+  .section-label:first-child{margin-top:0;}
+  .section-label .n{color:var(--cyan);}
+  .section-label::after{content:''; flex:1; height:1px; background:var(--border-soft);}
+
+  .cards{display:grid; grid-template-columns:1fr 1fr; gap:12px; min-width:0;}
+  @media (max-width:640px){ .cards{grid-template-columns:1fr;} }
+
+  .card{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:14px 16px 16px; position:relative; overflow:hidden; min-width:0;
+  }
+  .card .idx{
+    position:absolute; top:12px; right:14px; font-family:var(--mono); font-size:22px; font-weight:700;
+    color:var(--border-soft); line-height:1;
+  }
+  .card label{display:block; font-size:13px; font-weight:600; margin-bottom:2px; padding-right:30px;}
+  .card .hint{font-size:11.5px; color:var(--text-faint); margin-bottom:10px; line-height:1.4;}
+
+  .field-row{display:flex; gap:8px; align-items:center; flex-wrap:wrap; min-width:0;}
+  input[type=number]{
+    width:100%; min-width:0; background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+    font-family:var(--mono); font-size:15px; padding:8px 10px; border-radius:7px; outline:none;
+    transition:border-color .15s;
+  }
+  input[type=number]:focus{border-color:var(--cyan);}
+  input[type=number]::-webkit-inner-spin-button{opacity:1;}
+  select.sel{
+    width:100%; min-width:0; background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+    font-family:var(--sans); font-size:13px; font-weight:500; padding:9px 10px; border-radius:7px; outline:none;
+    transition:border-color .15s; cursor:pointer;
+    appearance:none; -webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%238493AA'/></svg>");
+    background-repeat:no-repeat; background-position:right 12px center;
+    padding-right:28px;
+  }
+  select.sel:focus{border-color:var(--cyan);}
+  select.sel:invalid{color:var(--text-faint);}
+  select.sel option{background:var(--panel-2); color:var(--text);}
+  .unit{font-family:var(--mono); font-size:11.5px; color:var(--text-faint); white-space:nowrap;}
+
+  .toggle{display:flex; gap:8px; min-width:0;}
+  .toggle button{
+    flex:1; min-width:0; background:var(--panel-2); border:1px solid var(--border); color:var(--text-dim);
+    font-family:var(--sans); font-size:13px; font-weight:600; padding:8px 0; border-radius:7px; cursor:pointer;
+    transition:all .15s;
+  }
+  .toggle button.active{background:var(--cyan-dim); border-color:var(--cyan); color:var(--cyan);}
+
+  .card-footer{display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:10px; border-top:1px solid var(--border-soft);}
+  .points-label{font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.06em;}
+  .points-val{font-family:var(--mono); font-size:17px; font-weight:700; color:var(--text-dim);}
+  .points-val.on{color:var(--cyan);}
+  .points-val.mid{color:var(--amber);}
+  .points-val.hi{color:var(--red);}
+  .points-val.warn{color:var(--red); font-size:12px;}
+
+  /* ---------- readout panel ---------- */
+  .readout{
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:20px; display:flex; flex-direction:column; gap:18px;
+    margin-top:26px;
+  }
+  .readout-head{font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-faint);}
+  .score-display{display:flex; align-items:baseline; gap:10px;}
+  .score-num{font-family:var(--mono); font-size:64px; font-weight:700; line-height:1; letter-spacing:-.02em; color:var(--cyan); transition:color .2s;}
+  .score-num.mid{color:var(--amber);}
+  .score-num.hi{color:var(--red);}
+  .score-max{font-family:var(--mono); font-size:16px; color:var(--text-faint);}
+
+  .band-tag{
+    display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:12px; font-weight:600;
+    padding:6px 10px; border-radius:6px; width:fit-content; letter-spacing:.02em;
+  }
+  .band-tag .dot{width:7px; height:7px; border-radius:50%;}
+  .band-low{background:var(--cyan-dim); color:var(--cyan);} .band-low .dot{background:var(--cyan);}
+  .band-mid{background:var(--amber-dim); color:var(--amber);} .band-mid .dot{background:var(--amber);}
+  .band-hi{background:var(--red-dim); color:var(--red);} .band-hi .dot{background:var(--red);}
+
+  .stack{height:14px; border-radius:4px; overflow:hidden; display:flex; background:var(--panel-2); border:1px solid var(--border-soft);}
+  .stack .seg{height:100%; transition:width .25s ease;}
+  .stack-caption{font-size:11px; color:var(--text-faint); display:flex; justify-content:space-between; font-family:var(--mono);}
+
+  .breakdown{display:flex; flex-direction:column; gap:7px; font-family:var(--mono); font-size:11.5px;}
+  .breakdown .row{display:flex; justify-content:space-between; color:var(--text-dim);}
+  .breakdown .row span:first-child{color:var(--text-faint);}
+  .breakdown .row.nonzero span:last-child{color:var(--text);}
+
+  .mortality-box{border-top:1px solid var(--border-soft); border-bottom:1px solid var(--border-soft); padding:16px 0;}
+  .mort-row{display:flex; align-items:center; gap:14px; margin-top:8px;}
+  .mort-pct{font-family:var(--mono); font-size:36px; font-weight:700; color:var(--text-dim); line-height:1; min-width:90px; flex-shrink:0;}
+  .mort-pct.on{color:var(--cyan);} .mort-pct.mid{color:var(--amber);} .mort-pct.hi{color:var(--red);}
+  .mort-meta{display:flex; flex-direction:column; gap:4px; font-size:11.5px; color:var(--text-dim); flex:1; min-width:0;}
+  .mort-band{font-family:var(--mono); font-size:10.5px; color:var(--text-faint);}
+  .mort-note{font-size:11px; color:var(--text-faint); line-height:1.5; margin-top:10px;}
+
+  .warn-box{
+    border:1px solid var(--red); background:var(--red-dim); color:var(--red); border-radius:8px;
+    padding:12px 14px; font-size:12.5px; line-height:1.5;
+  }
+
+  .interp{font-size:12px; line-height:1.55; color:var(--text-dim); border-top:1px solid var(--border-soft); padding-top:14px;}
+  .interp b{color:var(--text);}
+  .ref{font-size:10.5px; color:var(--text-faint); line-height:1.5; font-family:var(--mono);}
+
+  .reset-btn{
+    background:transparent; border:1px solid var(--border); color:var(--text-dim); font-family:var(--sans);
+    font-size:12px; font-weight:600; padding:9px; border-radius:7px; cursor:pointer; transition:all .15s;
+  }
+  .reset-btn:hover{border-color:var(--text-faint); color:var(--text);}
+
+  footer{max-width:1180px; margin:34px auto 0; font-size:11px; color:var(--text-faint); line-height:1.6; border-top:1px solid var(--border-soft); padding-top:16px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="header-top">
+      <div class="eyebrow">Instrumento clínico · uso em UTIN</div>
+      <button type="button" class="theme-toggle" id="themeToggle" aria-label="Alternar tema claro/escuro">
+        <span id="themeIcon">🌙</span><span id="themeLabel">Escuro</span>
+      </button>
+    </div>
+    <h1>CRIB-II</h1>
+    <div class="sub">Clinical Risk Index for Babies II — Parry et al., Lancet 2003. Use os valores da primeira hora após a admissão na UTIN. Pontuação teórica: 0 a 27.</div>
+    <div class="crosslink">Também disponível: <a href="https://ggaspari.github.io/snappe-ii/">calculadora SNAPPE-II</a></div>
+  </header>
+
+  <div class="grid">
+    <div class="main-col">
+
+      <div class="section-label"><span class="n">1</span> — Sexo, idade gestacional e peso</div>
+      <div class="cards" id="perinatal-cards"></div>
+
+      <div class="section-label"><span class="n">2</span> — Fisiologia na 1ª hora</div>
+      <div class="cards" id="physio-cards"></div>
+
+    </div>
+
+    <!-- READOUT -->
+    <aside class="readout">
+      <div>
+        <div class="readout-head">Escore total</div>
+        <div class="score-display">
+          <div class="score-num" id="totalScore">0</div>
+          <div class="score-max">/ 27</div>
+        </div>
+      </div>
+
+      <div id="warnBox" class="warn-box" style="display:none;"></div>
+
+      <div id="normalReadout">
+        <div style="margin-bottom:18px;">
+          <div class="stack" id="stackBar"></div>
+          <div class="stack-caption"><span>0</span><span>27</span></div>
+        </div>
+
+        <div class="breakdown" id="breakdown"></div>
+
+        <div class="mortality-box" id="mortalityBox">
+          <div class="readout-head">Mortalidade prevista</div>
+          <div class="mort-row">
+            <div class="mort-pct" id="mortPct">—</div>
+            <div class="mort-meta">
+              <div id="mortStrata">informe peso, IG, temperatura e excesso de base</div>
+              <div id="mortBand" class="mort-band">Logit = −6,476 + 0,45 × CRIB-II</div>
+            </div>
+          </div>
+          <div class="mort-note">Mortalidade prevista = e<sup>Logit</sup> / (1 + e<sup>Logit</sup>) — fórmula logística de Parry et al. (2003), coeficientes da coorte de validação original.</div>
+        </div>
+      </div>
+
+      <button class="reset-btn" id="resetBtn">Zerar todos os campos</button>
+
+      <div class="interp" id="interpText">
+        Preencha os parâmetros para calcular o escore.
+      </div>
+
+      <div class="ref">
+        Referência: Parry G, Tucker J, Tarnow-Mordi W; UK Neonatal Staffing Study Collaborative Group. CRIB II: an update of the Clinical Risk Index for Babies score. Lancet. 2003;361(9371):1789–91.<br><br>
+        Tabela de pontos peso × idade gestacional e fórmula de mortalidade reproduzidas da calculadora da SFAR (sfar.org/scores2/crib22.php) — porém calculadas aqui diretamente pela tabela de referência publicada na própria página (não pelo formulário interativo da SFAR), pois o JavaScript do formulário da SFAR tem um defeito: para diversas combinações de peso muito baixo com determinadas idades gestacionais (ex.: peso &lt;751 g com IG=32 sem., &lt;501 g com IG=29–31 sem.), nenhuma faixa do código é acionada e o campo de pontos permanece zerado por padrão — subestimando o escore nesses casos. Esta página evita esse defeito calculando diretamente pela tabela publicada; combinações fora da tabela (células em branco na fonte original) são sinalizadas explicitamente como não calculáveis, em vez de zeradas.<br><br>
+        A idade gestacional é limitada a 22–32 semanas porque é a faixa coberta pela tabela de referência original — o CRIB-II destina-se sobretudo a recém-nascidos de muito baixo peso/extremo prematuros.
+      </div>
+    </aside>
+  </div>
+
+  <footer>
+    Ferramenta de apoio, não substitui julgamento clínico. Não armazena nem transmite dados — todo cálculo ocorre localmente no navegador.
+  </footer>
+</div>
+
+<script>
+// ---------- weight × gestational-age point table ----------
+// Transcribed directly from the static reference table on sfar.org/scores2/crib22.php
+// (the table below the interactive form), NOT from that page's interactive JavaScript,
+// which has a bug: several low-birthweight/gestational-age combinations fall outside every
+// coded range and silently default to 0. Blank cells in the source table (combinations not
+// present in the original Parry et al. 2003 cohort) are kept as null here — "not computable" —
+// instead of being treated as 0.
+const CYAN = '#4FD8C6', AMBER = '#E9A94A', RED = '#E9635C';
+
+// rows: birthweight bands, heaviest to lightest. columns: gestational age 22..32 (index = ga-22)
+const WEIGHT_BANDS = [
+  {min:2751, max:Infinity},
+  {min:2501, max:2750},
+  {min:2251, max:2500},
+  {min:2001, max:2250},
+  {min:1751, max:2000},
+  {min:1501, max:1750},
+  {min:1251, max:1500},
+  {min:1001, max:1250},
+  {min:751,  max:1000},
+  {min:501,  max:750},
+  {min:251,  max:500},
+];
+
+const MALE_TABLE = [
+  [null,null,null,null,null,null,null,null,null,null,0],
+  [null,null,null,null,null,null,null,null,null,1,0],
+  [null,null,null,null,null,null,null,null,3,0,0],
+  [null,null,null,null,null,null,null,null,2,0,0],
+  [null,null,null,null,null,null,null,3,1,0,0],
+  [null,null,null,null,null,6,5,3,2,1,0],
+  [null,null,null,null,8,6,5,3,3,2,1],
+  [null,12,10,9,8,7,6,5,4,3,3],
+  [null,12,11,10,8,7,7,6,6,6,6],
+  [14,13,12,11,10,9,8,8,8,8,null],
+  [15,14,13,12,11,10,10,null,null,null,null],
+];
+
+const FEMALE_TABLE = [
+  [null,null,null,null,null,null,null,null,null,null,0],
+  [null,null,null,null,null,null,null,null,null,1,0],
+  [null,null,null,null,null,null,null,null,2,0,0],
+  [null,null,null,null,null,null,null,null,1,0,0],
+  [null,null,null,null,null,null,null,3,1,0,0],
+  [null,null,null,null,null,6,4,3,1,0,0],
+  [null,null,null,null,7,5,4,3,2,1,1],
+  [null,11,10,8,7,6,5,4,3,3,3],
+  [null,11,10,9,8,7,6,5,5,5,5],
+  [13,12,11,10,9,8,8,7,7,7,null],
+  [14,13,12,11,11,10,10,null,null,null,null],
+];
+
+function weightRowIndex(w){
+  for(let i=0;i<WEIGHT_BANDS.length;i++){
+    if(w>=WEIGHT_BANDS[i].min && w<=WEIGHT_BANDS[i].max) return i;
+  }
+  return null; // <251 g, outside the table
+}
+
+function cribWeightGaPoints(sex, ga, weight){
+  if(sex===null || ga===null || weight===null || weight===undefined || isNaN(weight)) return null;
+  const rowIdx = weightRowIndex(weight);
+  if(rowIdx===null) return null;
+  const colIdx = ga - 22;
+  if(colIdx<0 || colIdx>10) return null;
+  const table = sex==='F' ? FEMALE_TABLE : MALE_TABLE;
+  const val = table[rowIdx][colIdx];
+  return val; // number, or null if the cell is blank in the source table
+}
+
+function colorForPoints(p, max){
+  if(p<=0) return null;
+  const ratio = p/max;
+  if(ratio >= 0.65) return RED;
+  if(ratio >= 0.3) return AMBER;
+  return CYAN;
+}
+
+function fmtGrams(n){
+  const rounded = Math.round(n);
+  const str = String(Math.abs(rounded));
+  let out = '';
+  for(let i=0; i<str.length; i++){
+    const posFromEnd = str.length - i;
+    out += str[i];
+    if(posFromEnd > 1 && posFromEnd % 3 === 1) out += '.';
+  }
+  return (rounded<0?'-':'') + out;
+}
+
+const fields = [
+  {
+    id:'sex', section:'perinatal', title:'Sexo', hint:'A tabela peso × idade gestacional do CRIB-II é específica por sexo', max:0, scored:false,
+    type:'toggle2', unit:'',
+    options:[{label:'Masculino', value:'M'},{label:'Feminino', value:'F'}],
+    points:()=>0
+  },
+  {
+    id:'ga', section:'perinatal', title:'Idade gestacional', hint:'Idade gestacional ao nascimento — tabela disponível apenas de 22 a 32 semanas', max:0, scored:false,
+    type:'select', unit:'semanas', storeRaw:true,
+    options:(()=>{ const o=[]; for(let w=32; w>=22; w--){ o.push({label:w+' semanas', value:w}); } return o; })(),
+    points:()=>0
+  },
+  {
+    id:'bw', section:'perinatal', title:'Peso ao nascer', hint:'Pontuação calculada automaticamente a partir do sexo, IG e peso informados (tabela peso × IG)', max:15,
+    type:'number', unit:'g', step:10,
+    points:()=>{
+      const p = cribWeightGaPoints(state.sex, state.ga, state.bw);
+      return p===null ? 0 : p;
+    }
+  },
+  {
+    id:'temp', section:'physio', title:'Temperatura à admissão', hint:'Menor temperatura axilar na 1ª hora', max:5,
+    type:'select', unit:'°C',
+    options:[
+      {label:'≤ 29,6 °C', points:5},
+      {label:'29,7 – 31,2 °C', points:4},
+      {label:'31,3 – 32,8 °C', points:3},
+      {label:'32,9 – 34,4 °C', points:2},
+      {label:'34,5 – 36,0 °C', points:1},
+      {label:'36,1 – 37,5 °C', points:0},
+      {label:'37,6 – 39,1 °C', points:1},
+      {label:'39,2 – 40,7 °C', points:2},
+      {label:'≥ 40,8 °C', points:3},
+    ],
+    points:(v)=> v===null?0:v
+  },
+  {
+    id:'base', section:'physio', title:'Excesso de base', hint:'Pior valor na 1ª hora', max:7,
+    type:'select', unit:'mmol/L',
+    options:[
+      {label:'< -26', points:7},
+      {label:'-26 a -23', points:6},
+      {label:'-22 a -18', points:5},
+      {label:'-17 a -13', points:4},
+      {label:'-12 a -8', points:3},
+      {label:'-7 a -3', points:2},
+      {label:'-2 a 2', points:1},
+      {label:'≥ 3', points:0},
+    ],
+    points:(v)=> v===null?0:v
+  },
+];
+
+const state = {};
+
+function cardHTML(f, i){
+  let body = '';
+  if(f.type === 'select'){
+    const opts = f.options.map((o,oi)=>`<option value="${oi}">${o.label}${f.scored===false ? '' : ' — '+o.points+' pts'}</option>`).join('');
+    body = `
+      <div class="field-row">
+        <select class="sel" id="in-${f.id}">
+          <option value="" disabled selected>Selecionar…</option>
+          ${opts}
+        </select>
+      </div>`;
+  } else if(f.type === 'toggle2'){
+    body = `
+      <div class="toggle">
+        <button type="button" data-val="${f.options[0].value}" id="btn-${f.id}-0">${f.options[0].label}</button>
+        <button type="button" data-val="${f.options[1].value}" id="btn-${f.id}-1">${f.options[1].label}</button>
+      </div>`;
+  } else if(f.type === 'number'){
+    body = `
+      <div class="field-row">
+        <input type="number" id="in-${f.id}" step="${f.step}" placeholder="—">
+        <span class="unit">${f.unit}</span>
+      </div>
+      <div class="unit" id="derived-${f.id}" style="margin-top:6px;">Informe sexo, IG e peso</div>`;
+  }
+  const footer = f.scored===false ? '' : `
+      <div class="card-footer">
+        <span class="points-label">Pontos</span>
+        <span class="points-val" id="pts-${f.id}">0</span>
+      </div>`;
+  return `
+    <div class="card">
+      <div class="idx">${String(i+1).padStart(2,'0')}</div>
+      <label>${f.title}</label>
+      <div class="hint">${f.hint}</div>
+      ${body}
+      ${footer}
+    </div>`;
+}
+
+document.getElementById('perinatal-cards').innerHTML = fields.filter(f=>f.section==='perinatal').map((f)=>cardHTML(f, fields.indexOf(f))).join('');
+document.getElementById('physio-cards').innerHTML = fields.filter(f=>f.section==='physio').map((f)=>cardHTML(f, fields.indexOf(f))).join('');
+
+function updatePointsVisual(id, pts, max){
+  const el = document.getElementById(`pts-${id}`);
+  if(!el) return;
+  el.textContent = pts;
+  el.className = 'points-val' + (pts>0 ? (pts/max>=0.65?' hi':pts/max>=0.3?' mid':' on') : '');
+}
+
+function updateBwReadout(){
+  const el = document.getElementById('derived-bw');
+  if(!el) return;
+  if(state.sex===undefined || state.sex===null || state.ga===undefined || state.ga===null || state.bw===undefined || state.bw===null || isNaN(state.bw)){
+    el.textContent = 'Informe sexo, IG e peso';
+    el.style.color = '';
+    return;
+  }
+  const p = cribWeightGaPoints(state.sex, state.ga, state.bw);
+  if(p===null){
+    el.textContent = `Combinação peso (${fmtGrams(state.bw)} g) × IG (${state.ga} sem.) fora da tabela de referência — não calculável`;
+    el.style.color = 'var(--red)';
+  } else {
+    el.textContent = `${p} pts pela tabela peso × IG (${state.sex==='F'?'feminino':'masculino'}, ${state.ga} sem.)`;
+    el.style.color = '';
+  }
+}
+
+function recompute(){
+  let total = 0;
+  const contributions = [];
+  let bwGaNull = false;
+
+  fields.forEach(f=>{
+    let val = state[f.id] ?? null;
+    if(f.id === 'bw'){
+      const p = cribWeightGaPoints(state.sex, state.ga, state.bw);
+      if(p===null && state.sex!=null && state.ga!=null && state.bw!=null && !isNaN(state.bw)){
+        bwGaNull = true;
+      }
+    }
+    const pts = f.points(val);
+    total += pts;
+    if(f.scored !== false){
+      contributions.push({...f, pts});
+      updatePointsVisual(f.id, pts, f.max);
+    }
+  });
+  updateBwReadout();
+
+  const MAXTOTAL = 27;
+  const warnBox = document.getElementById('warnBox');
+  const normalReadout = document.getElementById('normalReadout');
+  const totalEl = document.getElementById('totalScore');
+  const interpEl = document.getElementById('interpText');
+
+  if(bwGaNull){
+    totalEl.textContent = '—';
+    totalEl.className = 'score-num';
+    warnBox.style.display = 'block';
+    warnBox.textContent = 'A combinação de peso e idade gestacional informada está fora da tabela de referência do CRIB-II (célula em branco na tabela original de Parry et al.) — o escore não pode ser calculado com segurança para esse par de valores. Confira o peso e a idade gestacional, ou avalie clinicamente sem depender deste escore.';
+    normalReadout.style.display = 'none';
+    interpEl.innerHTML = 'Combinação peso × idade gestacional fora da faixa tabelada.';
+    return;
+  }
+  warnBox.style.display = 'none';
+  normalReadout.style.display = 'block';
+
+  totalEl.textContent = total;
+  totalEl.className = 'score-num' + (total>=15?' hi': total>=8?' mid':'');
+
+  // stacked bar
+  const stack = document.getElementById('stackBar');
+  stack.innerHTML = '';
+  contributions.filter(c=>c.pts>0).forEach(c=>{
+    const seg = document.createElement('div');
+    seg.className = 'seg';
+    seg.style.width = (c.pts/MAXTOTAL*100)+'%';
+    seg.style.background = colorForPoints(c.pts, c.max) || CYAN;
+    seg.title = `${c.title}: ${c.pts} pts`;
+    stack.appendChild(seg);
+  });
+
+  // breakdown
+  const breakdown = document.getElementById('breakdown');
+  const sorted = [...contributions].sort((a,b)=> b.pts - a.pts);
+  breakdown.innerHTML = sorted.map(c=>`
+    <div class="row ${c.pts>0?'nonzero':''}">
+      <span>${c.title}</span>
+      <span>${c.pts} / ${c.max}</span>
+    </div>`).join('');
+
+  // mortality: Logit = -6.476 + 0.45*CRIB-II ; predicted = e^logit/(1+e^logit)
+  const allFilled = state.sex!=null && state.ga!=null && state.bw!=null && !isNaN(state.bw) && state.temp!=null && state.base!=null;
+  const mortPct = document.getElementById('mortPct');
+  const mortStrata = document.getElementById('mortStrata');
+  if(allFilled){
+    const logit = -6.476 + 0.45*total;
+    const p = Math.exp(logit) / (1 + Math.exp(logit));
+    const pct = p*100;
+    mortPct.textContent = pct.toFixed(1)+'%';
+    mortPct.className = 'mort-pct' + (pct>=30?' hi':pct>=10?' mid':' on');
+    mortStrata.textContent = `escore CRIB-II = ${total}`;
+    interpEl.innerHTML = `Escore <b>${total}</b> (0–27). Mortalidade prevista pela fórmula logística: <b>${pct.toFixed(1)}%</b>. Escore mais alto = maior risco previsto de mortalidade hospitalar.`;
+  } else {
+    mortPct.textContent = '—';
+    mortPct.className = 'mort-pct';
+    mortStrata.textContent = 'informe peso, IG, temperatura e excesso de base';
+    interpEl.innerHTML = total>0
+      ? `Escore parcial <b>${total}</b>. Preencha todos os campos para ver a mortalidade prevista.`
+      : 'Preencha os parâmetros para calcular o escore.';
+  }
+}
+
+// ---------- wire up inputs ----------
+fields.forEach(f=>{
+  if(f.type === 'select'){
+    const sel = document.getElementById(`in-${f.id}`);
+    sel.addEventListener('change', ()=>{
+      const idx = sel.value === '' ? null : parseInt(sel.value, 10);
+      if(idx===null){ state[f.id] = null; }
+      else if(f.storeRaw){ state[f.id] = f.options[idx].value; }
+      else { state[f.id] = f.options[idx].points; }
+      recompute();
+    });
+  } else if(f.type === 'number'){
+    const input = document.getElementById(`in-${f.id}`);
+    input.addEventListener('input', ()=>{
+      const v = input.value === '' ? null : parseFloat(input.value);
+      state[f.id] = (v===null || isNaN(v)) ? null : v;
+      recompute();
+    });
+  } else if(f.type === 'toggle2'){
+    const btn0 = document.getElementById(`btn-${f.id}-0`);
+    const btn1 = document.getElementById(`btn-${f.id}-1`);
+    const setVal = (v)=>{
+      state[f.id] = v;
+      btn0.classList.toggle('active', v===f.options[0].value);
+      btn1.classList.toggle('active', v===f.options[1].value);
+      recompute();
+    };
+    btn0.addEventListener('click', ()=>setVal(f.options[0].value));
+    btn1.addEventListener('click', ()=>setVal(f.options[1].value));
+  }
+});
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  fields.forEach(f=>{
+    state[f.id] = null;
+    if(f.type==='select'){ document.getElementById(`in-${f.id}`).value=''; }
+    if(f.type==='number'){ document.getElementById(`in-${f.id}`).value=''; }
+    if(f.type==='toggle2'){
+      document.getElementById(`btn-${f.id}-0`).classList.remove('active');
+      document.getElementById(`btn-${f.id}-1`).classList.remove('active');
+    }
+  });
+  recompute();
+});
+
+// ---------- theme toggle ----------
+function applyThemeUI(){
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  document.getElementById('themeIcon').textContent = isLight ? '☀️' : '🌙';
+  document.getElementById('themeLabel').textContent = isLight ? 'Claro' : 'Escuro';
+}
+applyThemeUI();
+document.getElementById('themeToggle').addEventListener('click', ()=>{
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  const next = isLight ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  try{ localStorage.setItem('crib2-theme', next); }catch(e){}
+  applyThemeUI();
+});
+
+recompute();
+</script>
+</body>
+</html>
