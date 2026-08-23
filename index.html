@@ -158,10 +158,14 @@
     display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:0.875rem; font-weight:600;
     padding:6px 10px; border-radius:6px; width:fit-content; letter-spacing:.02em;
   }
-  .band-tag .dot{width:9px; height:9px; flex-shrink:0;}
-  .band-low{background:var(--cyan-dim); color:var(--cyan);} .band-low .dot{background:var(--cyan); border-radius:50%;}
-  .band-mid{background:var(--amber-dim); color:var(--amber);} .band-mid .dot{background:var(--amber); clip-path:polygon(50% 0%, 100% 100%, 0% 100%);}
-  .band-hi{background:var(--red-dim); color:var(--red);} .band-hi .dot{background:var(--red); clip-path:polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);}
+  .band-tag .bars{display:flex; align-items:flex-end; gap:2px; height:11px; flex-shrink:0;}
+  .band-tag .bars span{width:3px; border-radius:1px; background:currentColor; opacity:.25; display:block;}
+  .band-tag .bars span:nth-child(1){height:4px;}
+  .band-tag .bars span:nth-child(2){height:7px;}
+  .band-tag .bars span:nth-child(3){height:11px;}
+  .band-low{background:var(--cyan-dim); color:var(--cyan);} .band-low .bars span:nth-child(1){opacity:1;}
+  .band-mid{background:var(--amber-dim); color:var(--amber);} .band-mid .bars span:nth-child(1), .band-mid .bars span:nth-child(2){opacity:1;}
+  .band-hi{background:var(--red-dim); color:var(--red);} .band-hi .bars span{opacity:1;}
 
   .stack{height:14px; border-radius:4px; overflow:hidden; display:flex; background:var(--panel-2); border:1px solid var(--border-soft);}
   .stack .seg{height:100%; transition:width .25s ease;}
@@ -491,7 +495,7 @@ function updateBwReadout(){
     el.textContent = `Combinação peso (${fmtGrams(state.bw)} g) × IG (${state.ga} sem.) fora da tabela de referência — não calculável`;
     el.style.color = 'var(--red)';
   } else {
-    el.textContent = `${p} pts pela tabela peso × IG (${state.sex==='F'?'feminino':'masculino'}, ${state.ga} sem.)`;
+    el.textContent = `${p} pts — ${state.sex==='F'?'feminino':'masculino'}, ${state.ga} sem.`;
     el.style.color = '';
   }
 }
