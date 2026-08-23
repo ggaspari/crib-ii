@@ -59,6 +59,9 @@
   /* ---------- header ---------- */
   header{display:flex; flex-direction:column; gap:6px; margin-bottom:28px; border-bottom:1px solid var(--border-soft); padding-bottom:20px;}
   .header-top{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  @media (max-width:480px){
+    .header-top{flex-direction:column; align-items:flex-start; gap:10px;}
+  }
   .eyebrow{font-family:var(--mono); font-size:0.8125rem; letter-spacing:.14em; text-transform:uppercase; color:var(--cyan);}
   h1{font-size:1.75rem; font-weight:600; letter-spacing:-0.01em;}
   .sub{color:var(--text-dim); font-size:0.9375rem; max-width:640px; line-height:1.5;}
@@ -155,10 +158,10 @@
     display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:0.875rem; font-weight:600;
     padding:6px 10px; border-radius:6px; width:fit-content; letter-spacing:.02em;
   }
-  .band-tag .dot{width:7px; height:7px; border-radius:50%;}
-  .band-low{background:var(--cyan-dim); color:var(--cyan);} .band-low .dot{background:var(--cyan);}
-  .band-mid{background:var(--amber-dim); color:var(--amber);} .band-mid .dot{background:var(--amber);}
-  .band-hi{background:var(--red-dim); color:var(--red);} .band-hi .dot{background:var(--red);}
+  .band-tag .dot{width:9px; height:9px; flex-shrink:0;}
+  .band-low{background:var(--cyan-dim); color:var(--cyan);} .band-low .dot{background:var(--cyan); border-radius:50%;}
+  .band-mid{background:var(--amber-dim); color:var(--amber);} .band-mid .dot{background:var(--amber); clip-path:polygon(50% 0%, 100% 100%, 0% 100%);}
+  .band-hi{background:var(--red-dim); color:var(--red);} .band-hi .dot{background:var(--red); clip-path:polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);}
 
   .stack{height:14px; border-radius:4px; overflow:hidden; display:flex; background:var(--panel-2); border:1px solid var(--border-soft);}
   .stack .seg{height:100%; transition:width .25s ease;}
