@@ -8,7 +8,7 @@
 (function(){
   try{
     var stored = localStorage.getItem('crib2-theme');
-    if(stored === 'light' || stored === 'dark'){
+    if(stored === 'light' || stored === 'dark' || stored === 'hc'){
       document.documentElement.setAttribute('data-theme', stored);
     }
   }catch(e){}
@@ -49,6 +49,22 @@
     --amber:#9A6400;
     --amber-dim:#FBEBD2;
     --red:#C23B33;
+    --red-dim:#FBE1DE;
+  }
+  :root[data-theme="hc"]{
+    --bg:#FFFFFF;
+    --panel:#FFFFFF;
+    --panel-2:#FFFFFF;
+    --border:#000000;
+    --border-soft:#000000;
+    --text:#000000;
+    --text-dim:#0D0D0D;
+    --text-faint:#1A1A1A;
+    --cyan:#0B6057;
+    --cyan-dim:#D7F1EC;
+    --amber:#7A4F00;
+    --amber-dim:#FBEBD2;
+    --red:#9D3029;
     --red-dim:#FBE1DE;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
@@ -212,6 +228,24 @@
     outline:2px solid var(--cyan); outline-offset:2px;
   }
   footer{max-width:1180px; margin:34px auto 0; font-size:0.75rem; color:var(--text-faint); line-height:1.6; border-top:1px solid var(--border-soft); padding-top:16px;}
+  /* ---------- alto contraste: reforço estrutural para baixa visão / monitores ruins ---------- */
+  [data-theme="hc"] .card,
+  [data-theme="hc"] .readout,
+  [data-theme="hc"] input[type=number],
+  [data-theme="hc"] select.sel,
+  [data-theme="hc"] .theme-toggle,
+  [data-theme="hc"] .reset-btn,
+  [data-theme="hc"] .toggle button,
+  [data-theme="hc"] .warn-box{
+    border-width:2px;
+  }
+  [data-theme="hc"] .band-tag{border:2px solid currentColor;}
+  [data-theme="hc"] select.sel{
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%23000000'/></svg>");
+  }
+  [data-theme="hc"] select.sel:focus-visible, [data-theme="hc"] input[type=number]:focus-visible, [data-theme="hc"] button:focus-visible, [data-theme="hc"] a:focus-visible{
+    outline-width:3px;
+  }
 </style>
 </head>
 <body>
@@ -220,7 +254,7 @@
   <header>
     <div class="header-top">
       <div class="eyebrow">Instrumento clínico · uso em UTIN</div>
-      <button type="button" class="theme-toggle" id="themeToggle" aria-label="Alternar tema claro/escuro">
+      <button type="button" class="theme-toggle" id="themeToggle" aria-label="Alternar tema: escuro, claro ou alto contraste">
         <span id="themeIcon">🌙</span><span id="themeLabel">Escuro</span>
       </button>
     </div>
@@ -641,15 +675,18 @@ document.getElementById('resetBtn').addEventListener('click', ()=>{
 });
 
 // ---------- theme toggle ----------
+const THEME_ORDER = ['dark','light','hc'];
+const THEME_ICON = {dark:'🌙', light:'☀️', hc:'🔲'};
+const THEME_LABEL = {dark:'Escuro', light:'Claro', hc:'Alto contraste'};
 function applyThemeUI(){
-  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-  document.getElementById('themeIcon').textContent = isLight ? '☀️' : '🌙';
-  document.getElementById('themeLabel').textContent = isLight ? 'Claro' : 'Escuro';
+  const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+  document.getElementById('themeIcon').textContent = THEME_ICON[theme];
+  document.getElementById('themeLabel').textContent = THEME_LABEL[theme];
 }
 applyThemeUI();
 document.getElementById('themeToggle').addEventListener('click', ()=>{
-  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-  const next = isLight ? 'dark' : 'light';
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = THEME_ORDER[(THEME_ORDER.indexOf(current)+1) % THEME_ORDER.length];
   document.documentElement.setAttribute('data-theme', next);
   try{ localStorage.setItem('crib2-theme', next); }catch(e){}
   applyThemeUI();
