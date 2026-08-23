@@ -104,6 +104,12 @@
   .card .hint{font-size:0.8125rem; color:var(--text-faint); margin-bottom:10px; line-height:1.4;}
 
   .field-row{display:flex; gap:8px; align-items:center; flex-wrap:wrap; min-width:0;}
+  .input-unit-wrap{position:relative; width:100%; min-width:0;}
+  .input-unit-wrap input[type=number]{padding-right:54px;}
+  .unit-inline{
+    position:absolute; right:28px; top:50%; transform:translateY(-50%);
+    font-family:var(--mono); font-size:0.8125rem; color:var(--text-faint); white-space:nowrap; pointer-events:none;
+  }
   input[type=number]{
     width:100%; min-width:0; background:var(--panel-2); border:1px solid var(--border); color:var(--text);
     font-family:var(--mono); font-size:1rem; padding:8px 10px; border-radius:7px; outline:none;
@@ -453,8 +459,10 @@ function cardHTML(f, i){
   } else if(f.type === 'number'){
     body = `
       <div class="field-row">
-        <input type="number" id="in-${f.id}" step="${f.step}" placeholder="—">
-        <span class="unit">${f.unit}</span>
+        <div class="input-unit-wrap">
+          <input type="number" id="in-${f.id}" step="${f.step}" placeholder="—">
+          <span class="unit-inline">${f.unit}</span>
+        </div>
       </div>
       <div class="unit" id="derived-${f.id}" style="margin-top:6px;">Informe sexo, IG e peso</div>`;
   }
