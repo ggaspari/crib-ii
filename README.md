@@ -29,8 +29,10 @@ score CRIB-II (Clinical Risk Index for Babies II).
 - A idade gestacional é limitada a 22–32 semanas, faixa coberta pela tabela de
   referência original — o CRIB-II destina-se sobretudo a recém-nascidos de
   muito baixo peso/extremo prematuros.
-- Tema claro/escuro alternável (botão no cabeçalho), com preferência salva no
-  navegador.
+- Três temas alternáveis (botão no cabeçalho, ciclo escuro → claro → alto contraste),
+  com preferência salva no navegador. O alto contraste elimina tons de cinza do texto
+  e das bordas (tudo preto/branco puro, com bordas mais grossas), pensado para telas
+  ruins de terminal hospitalar e para baixa visão.
 
 ## Uso
 
